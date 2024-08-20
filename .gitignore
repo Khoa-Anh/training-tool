@@ -1,0 +1,8 @@
+weights/
+__pycache__/
+runs/
+myenv/
+data/
+training-tool.tar
+yolov8m.pt
+yolov8n.pt

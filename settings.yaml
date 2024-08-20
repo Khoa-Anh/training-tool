@@ -1,0 +1,17 @@
+settings_version: 0.0.4
+datasets_dir: /home/stackops/training-tool-2/datasets
+weights_dir: weights
+runs_dir: runs
+uuid: c05d62cd649fa9a5aa9c8a14450dac2ee4d666b78872dabecf3610cd929abf86
+sync: true
+api_key: ''
+openai_api_key: ''
+clearml: true
+comet: true
+dvc: true
+hub: true
+mlflow: true
+neptune: true
+raytune: true
+tensorboard: true
+wandb: true
