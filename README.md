@@ -123,3 +123,139 @@
 - Các thông số như tỷ lệ học, số epoch, và kích thước batch có thể cần được điều chỉnh tùy theo đặc thù của dữ liệu và yêu cầu của mô hình.
 
 Ứng dụng này hỗ trợ người dùng từ bước nhập dữ liệu ban đầu cho đến huấn luyện và phát hiện đối tượng, qua đó giúp đơn giản hóa quá trình làm việc cho các nhiệm vụ phát hiện đối tượng.
+
+---
+
+## Hướng dẫn chạy chương trình trên local
+
+**Cài Virtualenv**
+
+```
+pip install virtualenv
+
+```
+
+**Tạo môi trường ảo**
+
+- Mở terminal và di chuyển đến thư mục dự án. Sau đó, sử dụng lệnh sau để tạo một môi trường ảo mới (thay `myenv` bằng tên muốn đặt cho môi trường ảo):
+
+```
+python -m venv myenv
+
+```
+
+**Kích hoạt môi trường ảo**
+
+- Trên Linux/macOS:
+
+```
+source myenv/bin/activate
+
+```
+
+- Trên Windows (PowerShell)
+
+```
+.\\myenv\\Scripts\\Activate.ps1
+
+```
+
+- Trên Windows (Command Prompt):
+
+```
+.\\myenv\\Scripts\\activate
+
+```
+
+- **Cài các thư viện trong** requirements.txt
+
+```
+pip install -r requirements.txt
+
+```
+
+- Chạy chương trình:
+
+```
+streamlit run app.py
+```
+
+**Thoát khỏi môi trường ảo**
+
+```
+deactivate
+
+```
+
+---
+
+## Giải thích thuật toán và công nghệ
+
+### 1. **Streamlit Framework**
+
+- **Streamlit** là công nghệ chính dùng để tạo giao diện người dùng của ứng dụng. Nó chịu trách nhiệm render các nút, thanh trượt, trình tải tệp và hiển thị hình ảnh và văn bản trên trang.
+- Trang ứng dụng được cấu trúc thành ba bước chính:
+    1. **Nhập dữ liệu**
+    2. **Đào tạo**
+    3. **Phát hiện đối tượng**
+- Mỗi bước (hoặc "step") được điều khiển qua thanh điều hướng bên sidebar mà người dùng chọn.
+
+### 2. **Mô Hình YOLO (You Only Look Once)**
+
+- Đây là một **thuật toán phát hiện đối tượng thời gian thực** được sử dụng để phát hiện đối tượng trong hình ảnh. Ứng dụng sử dụng **YOLOv8** từ thư viện **Ultralytics**.
+- **YOLOv8** là một mô hình học sâu có khả năng phát hiện đối tượng trong hình ảnh và video một cách hiệu quả. Nó hoạt động bằng cách chia hình ảnh thành lưới và dự đoán các hộp giới hạn và xác suất lớp cho mỗi ô lưới.
+- Mô hình được đào tạo bằng cách sử dụng dữ liệu tùy chỉnh và sau đó được sử dụng để phát hiện đối tượng trong hình ảnh được tải lên.
+
+### 3. **Xử Lý Tệp và Dữ Liệu**
+
+- **Nhập dữ liệu**:
+    - **Từ Custom Vision**: Người dùng nhập `project_id` và `training_key`, và các hình ảnh được tải xuống từ nền tảng Custom Vision. Những hình ảnh này được lưu trữ trong thư mục `data/train/images` và `data/train/labels`.
+    - **Từ Tệp ZIP**: Người dùng có thể tải lên một tệp ZIP chứa hình ảnh và dữ liệu hộp giới hạn tương ứng. Ứng dụng giải nén tệp ZIP này vào thư mục `data` và xử lý nó để tạo một tệp ánh xạ lớp (`data/mapping.txt`).
+    - Trong cả hai trường hợp, dữ liệu được chia thành các tập huấn luyện và tập xác thực dựa trên tỷ lệ mà người dùng cung cấp.
+- **Đào tạo Mô Hình YOLO**:
+    - Người dùng có thể điều chỉnh các tham số đào tạo như `epochs`, `batch size`, `image size`, `learning rate`, v.v.
+    - Những tham số này được truyền vào hàm `run_yolo_training()`, bắt đầu quá trình đào tạo mô hình YOLO bằng dữ liệu đã được xử lý. Các trọng số (mô hình đã đào tạo) được lưu trữ trong thư mục `weights`.
+    - Ứng dụng cũng hỗ trợ **dừng sớm** bằng cách sử dụng tham số `patience`, điều này giúp dừng quá trình đào tạo nếu hiệu suất của mô hình trên dữ liệu xác thực không cải thiện sau một số epoch nhất định.
+- **Phát hiện Đối tượng**:
+    - Người dùng chọn một mô hình đã đào tạo (`.pt` file) và tải lên một hình ảnh. Hình ảnh được xử lý bằng OpenCV để thay đổi kích thước và chuyển đổi màu, và YOLO được sử dụng để dự đoán các đối tượng trong hình ảnh.
+    - **Hộp giới hạn**: Các đối tượng được phát hiện sẽ có các hộp giới hạn được vẽ bằng OpenCV, và các lớp sẽ được gán nhãn trên hình ảnh. Hình ảnh đã xử lý này sau đó được hiển thị trên giao diện người dùng.
+    - Kết quả phát hiện, bao gồm tên lớp và thông tin hộp giới hạn, được lưu trữ trong `prediction_dict`.
+
+### 4. **Lưu Trữ Tệp**
+
+- **Tệp Dữ Liệu**:
+    - Dữ liệu được lưu trữ trong thư mục `data` sau khi được tải xuống từ Custom Vision hoặc giải nén từ tệp ZIP tải lên.
+- **Tệp Trọng Số và Mô Hình**:
+    - Trọng số của mô hình YOLO đã đào tạo được lưu trong thư mục `weights` dưới dạng các tệp `.pt`. Những tệp này có sẵn để chọn trong bước phát hiện đối tượng.
+- **Tệp Tạm Thời**:
+    - Các tệp tạm thời như hộp giới hạn và hình ảnh được xử lý trong quá trình phát hiện đối tượng được xử lý trong bộ nhớ bằng OpenCV và NumPy, vì vậy không có tệp bổ sung nào được lưu trên đĩa trừ khi người dùng lưu chúng một cách rõ ràng.
+
+### 5. **OpenCV để Xử Lý Hình Ảnh**
+
+- **OpenCV** được sử dụng để đọc, thay đổi kích thước và xử lý các hình ảnh trước khi truyền cho mô hình YOLO. Nó thực hiện:
+    - **Tải hình ảnh**: Đọc hình ảnh tải lên và chuyển đổi nó từ byte thành định dạng có thể đọc được bởi OpenCV.
+    - **Thay đổi kích thước**: Ứng dụng thay đổi kích thước hình ảnh tải lên trong khi giữ nguyên tỷ lệ để vừa với chiều dài ngắn cố định (ví dụ: 1200 pixel).
+    - **Vẽ Hộp Giới Hạn**: Khi các đối tượng được phát hiện, OpenCV được sử dụng để vẽ các hình chữ nhật quanh các đối tượng phát hiện, thêm nhãn lớp và hiển thị hình ảnh đã xử lý trên giao diện người dùng.
+
+### 6. **Ánh Xạ Lớp**
+
+- Ứng dụng duy trì một **ánh xạ lớp** từ ID đối tượng (số) đến tên lớp (dễ đọc). Ánh xạ này được tạo ra từ metadata của dữ liệu và rất quan trọng để hiểu rõ từng đối tượng được phát hiện.
+- Nó được sử dụng trong bước phát hiện đối tượng để gán nhãn chính xác các đối tượng phát hiện.
+
+### 7. **Công Nghệ Khác**
+
+- **Numpy**: Được sử dụng để xử lý dữ liệu số và chuyển đổi dữ liệu hình ảnh thành các mảng có thể được OpenCV và YOLO xử lý.
+- **Shutil**: Được sử dụng để quản lý tệp và thư mục, chẳng hạn như xóa các thư mục cũ hoặc làm sạch thư mục `data` trước khi bắt đầu một quy trình đào tạo mới.
+
+### Tóm Tắt Quy Trình Dữ Liệu
+
+1. **Bước Nhập Dữ Liệu**:
+    - Dữ liệu được tải xuống từ Custom Vision hoặc tải lên dưới dạng tệp ZIP, sau đó lưu trữ trong thư mục `data/train`.
+    - Dữ liệu được chia thành các tập huấn luyện và xác thực.
+2. **Bước Đào Tạo**:
+    - Mô hình YOLO được đào tạo trên dữ liệu với các tham số đào tạo do người dùng thiết lập. Trọng số được lưu trong thư mục `weights`.
+3. **Bước Phát Hiện Đối Tượng**:
+    - Người dùng chọn một mô hình và tải lên một hình ảnh.
+    - Mô hình YOLO phát hiện đối tượng trong hình ảnh, và ứng dụng hiển thị kết quả với các hộp giới hạn và nhãn lớp.
+
+Ứng dụng này cung cấp một quy trình toàn diện từ việc nhập dữ liệu, đào tạo mô hình, đến việc phát hiện đối tượng trong hình ảnh.
